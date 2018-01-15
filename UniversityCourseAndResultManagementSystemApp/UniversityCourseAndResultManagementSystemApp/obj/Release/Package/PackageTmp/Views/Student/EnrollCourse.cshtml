@@ -1,0 +1,184 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "EnrollCourse";
+    List<string> regNoList = ViewBag.regNoList;
+    string message = ViewBag.message;
+    List<Course> courses = ViewBag.courses;
+}
+<div class="container">
+
+
+    <form id="EnrollCourse" class="well form-horizontal" method="POST">
+        <fieldset>
+            <!-- Form Name -->
+            <legend><center><h2><b>Enroll In A COURSE</b></h2></center></legend><br>
+
+            @if (message != null)
+            {
+                <h3 align="center">@message</h3>
+            }
+            
+            <div class="form-group">
+                <label for="StudentRegNo" class="col-md-4 control-label">Student.Reg.NO</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="StudentRegNo" name="StudentRegNo">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                            @if (regNoList != null)
+                            {
+                                foreach (string regNo in regNoList)
+                                {
+                                    <option value="@regNo">@regNo</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="StudentName" class="col-md-4 control-label">Name</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentName" id="StudentName" placeholder="" class="form-control" type="text" readonly />
+                    </div>
+                </div>
+            </div>
+
+           
+            <div class="form-group">
+                <label for="StudentEmail" class="col-md-4 control-label">Email</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentEmail" id="StudentEmail" placeholder="" class="form-control" type="text" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="StudentDept" class="col-md-4 control-label">Depertment</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentDept" id="StudentDept" placeholder="" class="form-control" type="text" readonly />
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="CourseCode" class="col-md-4 control-label">Select Course</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="CourseCode" name="CourseCode">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                           
+                        </select>
+                    </div>
+                </div>
+            </div>
+          
+            
+            <div class="form-group">
+                <label for="EnrollDate" class="col-md-4 control-label">Date</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input type="date" id="EnrollDate" name="EnrollDate" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+           
+          
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 54%;">
+                    <br>
+                    <button type="submit" class="btn btn-warning"> Enroll <span class="glyphicon glyphicon-send"></span></button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <br/><br /><br /><br /><br />
+</div>
+
+@section scripts
+{<script src="~/Scripts/jquery-3.2.1.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+    <script>
+    $(document).ready(function () {
+
+
+        $("#StudentRegNo").change(function () {
+
+            var StudentRegNo = $("#StudentRegNo").val();
+            var json = { StudentRegNo: StudentRegNo };
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetStudentByStudentRegNo", "Student")',
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(json),
+                success: function (data) {
+                    $('input[name="StudentName"]').val(data.StudentName);
+                    $('input[name="StudentEmail"]').val(data.StudentEmail);
+                    $('input[name="StudentDept"]').val(data.StudentDept);
+
+
+                }
+
+
+            });
+            var StudentDept = $("#StudentDept").val();
+            var json = { StudentDept: StudentDept };
+            $("#CourseCode").empty();
+            $("#CourseCode").append('<option value="default">---SELECT---</option>');
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetCoursesByDepartment", "Student")',
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(json),
+                success: function (data) {
+                    $.each(data, function (key, value) {
+                        $("#CourseCode").append('<option value="' + value.CourseCode + '">' + value.CourseCode + '</option>');
+                    });
+                }
+            });
+
+        });
+
+
+
+        $.validator.addMethod("valueNotEquals", function (value, element, arg) {
+            return arg !== value;
+        }, "Value must not equal arg.");
+
+        $("#EnrollCourse").validate({
+            rules: {
+                StudentRegNo: { valueNotEquals: "default" },
+                CourseCode: { valueNotEquals: "default" },
+                EnrollDate: { valueNotEquals: "" }
+            },
+            messages: {
+                StudentRegNo: { valueNotEquals: "Please select Student!" },
+                CourseCode: { valueNotEquals: "Please select Course!" },
+                EnrollDate: { valueNotEquals: "Please select Date!" }
+            }
+
+        });
+    });
+    </script>
+}
+
+
+

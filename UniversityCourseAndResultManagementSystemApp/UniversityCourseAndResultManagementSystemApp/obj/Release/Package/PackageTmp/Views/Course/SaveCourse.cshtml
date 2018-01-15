@@ -1,0 +1,164 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "SaveCourse";
+    List<Department> deptList = ViewBag.deptList;
+    List<string> semList = ViewBag.semList;
+    string message = ViewBag.message;
+}
+
+
+<div id="container">
+    <form id="SaveCourse" class="well form-horizontal" method="GET">
+        <fieldset>
+
+            <legend><center><h2><b>ADD COURSE</b></h2></center></legend><br>
+
+            @if (message != null)
+            {
+                <h4 align="center">@message</h4>
+            }
+
+            <div class="form-group">
+                <label for="CourseCode" class="col-md-4 control-label">COURSE CODE</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input id="CourseCode" name="CourseCode" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="CourseName" class="col-md-4 control-label">COURSE NAME</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="CourseName" id="CourseName" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="CourseCredit" class="col-md-4 control-label">COURSE CREDIT</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="CourseCredit" id="CourseCredit" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="CourseDes" class="col-md-4 control-label">DESCRIPTION</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="CourseDes" id="CourseDes" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="DeptCode" class="col-md-4 control-label">DEPARTMENT</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="DeptCode" name="DeptCode">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                            @if (deptList != null)
+                            {
+                                foreach (Department department in deptList)
+                                {
+                                    <option value="@department.DeptCode">@department.DeptName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="CourseSemester" class="col-md-4 control-label">SEMESTER</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="CourseSemester" name="CourseSemester">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                            @if (semList != null)
+                            {
+                                foreach (string data in semList)
+                                {
+                                    <option value="@data">@data</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 54%;">
+                    <br>
+                    <button type="submit" class="btn btn-warning">SAVE COURSE<span class="glyphicon glyphicon-send"></span></button>
+                </div>
+            </div>
+
+            <!-- Success message -->
+            <div class="alert alert-success" role="alert" id="success_message">Success <i class="glyphicon glyphicon-thumbs-up"></i> Success!.</div>
+
+
+        </fieldset>
+    </form>
+
+</div>
+
+
+@section scripts
+{
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+            $.validator.addMethod("valueNotEquals", function (value, element, arg) {
+                return arg !== value;
+            }, "Value must not equal arg.");
+
+            $("#SaveCourse").validate({
+                rules: {
+                    CourseCode: "required",
+                    CourseName: "required",
+                    CourseCredit: {
+                        required: true,
+                        number: true
+                    },
+                    CourseDes: "required",
+                    DeptCode: { valueNotEquals: "default" },
+                    CourseSemester: { valueNotEquals: "default" },
+                },
+                messages: {
+                    CourseCode: "Enter Department Code",
+                    CourseName: "Enter Department Name",
+                    CourseCredit: {
+                        required: "Enter Course Credit",
+                        number: "Credit should be numbers"
+                    },
+                    CourseDes: "Enter Department Name",
+                    DeptCode: { valueNotEquals: "Please select Department!" },
+                    CourseSemester: { valueNotEquals: "Please select Semester!" }
+                }
+
+            });
+        });
+    </script>
+}

@@ -1,0 +1,83 @@
+﻿
+@{
+    ViewBag.Title = "SaveDepartment";
+    string message = ViewBag.message;
+}
+
+
+<div id="container">
+
+    <form id="SaveDepartment" class ="well form-horizontal" method="POST" >
+        <fieldset>
+           
+            <legend><center><h2><b>SAVE DEPARTMENT</b></h2></center></legend><br>
+
+            @if (message != null)
+            {
+                <h4 align="center">@message</h4>
+            }
+
+            <div class="form-group">
+                <label for="DeptCode" class="col-md-4 control-label">DEPARTMENT CODE</label>  
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input id="DeptCode" name="DeptCode" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="DeptName" class="col-md-4 control-label">DEPARTMENT NAME</label>  
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="DeptName" id="DeptName" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            
+            
+                
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 51%;"><br>
+                    <button type="submit" class="btn btn-warning">SAVE <span class="glyphicon glyphicon-send"></span></button>
+                </div>
+            </div>
+            
+          
+            <div class="alert alert-success" role="alert" id="success_message">Success <i class="glyphicon glyphicon-thumbs-up"></i> Success!.</div>
+            
+
+        </fieldset> 
+    </form>
+</div>
+
+
+@section scripts
+{
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+            $.validator.addMethod("valueNotEquals", function (value, element, arg) {
+                return arg !== value;
+            }, "Value must not equal arg.");
+
+            $("#SaveDepartment").validate({
+                rules: {
+                    DeptCode: "required",
+                    DeptName: "required"
+                },
+                messages: {
+                    DeptCode: "Enter Department Code",
+                    DeptName: "Enter Department Name"
+                }
+
+            });
+        });
+    </script>
+}

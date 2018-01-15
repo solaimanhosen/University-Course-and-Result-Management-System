@@ -1,0 +1,194 @@
+﻿@using Org.BouncyCastle.Crypto.Tls
+@using UniversityCourseAndResultManagementSystemApp.Models
+@{
+    ViewBag.Title = "SaveTeacher";
+    List<Department> deptList = ViewBag.deptList;
+    List<string> designationList = ViewBag.designationList;
+    string message = ViewBag.message;
+}
+<div class="container">
+
+
+    <form id="SaveTeacher" class="well form-horizontal" method="POST">
+        <fieldset>
+            <!-- Form Name -->
+            <legend><center><h2><b>SAVE TEACHER</b></h2></center></legend><br>
+
+            @if (message != null)
+            {
+                <h5 align="center">@message</h5>
+            }
+            
+            <div class="alert alert-danger" role="alert" id="error_message">Error.! <i class="glyphicon glyphicon-thumbs-down"></i> Error.! Email Exists.!</div>
+            <div class="alert alert-success" role="alert" id="success_message">Success <i class="glyphicon glyphicon-thumbs-up"></i> Success!.</div>
+
+            <div class="form-group">
+                <label for="TeacherName" class="col-md-4 control-label">Name</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input id="TeacherName" name="TeacherName" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="TeacherAddress" class="col-md-4 control-label">Address</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="TeacherAddress" id="TeacherAddress" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="TeacherEmail" class="col-md-4 control-label">Email</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="TeacherEmail" id="TeacherEmail" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="TeacherContactNo" class="col-md-4 control-label">Contuct Number</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="TeacherContactNo" id="TeacherContactNo" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="TeacherDesignation" class="col-md-4 control-label">Designation</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+              
+                        <select class="form-control selectpicker" id="TeacherDesignation" name="TeacherDesignation">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                            @if (designationList != null)
+                            {
+                                foreach (string data in designationList)
+                                {
+                                    <option value="@data">@data</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="TeacherDeptCode" class="col-md-4 control-label">Depertment</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        
+                        <select class="form-control selectpicker" id="TeacherDeptCode" name="TeacherDeptCode">
+                            <option value="default">
+                                ---SELECT--
+                            </option>
+                            @if (deptList != null)
+                            {
+                                foreach (Department department in deptList)
+                                {
+                                    <option value="@department.DeptCode">@department.DeptName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="TeacherCreditLimit" class="col-md-4 control-label">Credit to be Taken</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="TeacherCreditLimit" id="TeacherCreditLimit" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 54%;"><br>
+                    <button type="submit" class="btn btn-warning">SAVE <span class="glyphicon glyphicon-send"></span></button>
+                </div>
+            </div>
+
+            
+        </fieldset>
+        <br/><br/><br/>
+    </form>
+    @if (message == "Saved Successfully !!!")
+    {
+        <script>
+            $("#success_message").show();
+        </script>
+         
+    }
+    @if (message == "Email already Exists !!!")
+    {
+        <script>
+            $("#error_message").show();
+        </script>
+
+    }
+</div>
+
+@section scripts{
+    
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    <script src="~/Scripts/jquery.validate.js"></script>
+    <script>
+        $(document).ready(function () {
+            
+            
+            $.validator.addMethod("valueNotEquals", function (value, element, arg) {
+                return arg !== value;
+            }, "Value must not equal arg.");
+            $("#SaveTeacher").validate({
+                rules: {
+                    TeacherName: "required",
+                    TeacherAddress: "required",
+                    TeacherEmail: {
+                        required: true,
+                        email: true
+                    },
+                    TeacherContactNo: {
+                        required: true,
+                        number: true
+                    },
+                    TeacherDesignation: { valueNotEquals: "default" },
+                    TeacherDeptCode: { valueNotEquals: "default" },
+                    TeacherCreditLimit: {
+                        required: true,
+                        number: true
+                    }
+                },
+                messages: {
+                    TeacherName: "Please enter a Name",
+                    TeacherAddress: "Enter an Address",
+                    TeacherEmail: {
+                        required: "Enter an Email",
+                        number: "Enter valid Email"
+                    },
+                    TeacherContactNo: {
+                        required: "Enter a Contact No.",
+                        number: "Enter numbers"
+                    },
+                    TeacherDesignation: { valueNotEquals: "Please select Designation!" },
+                    TeacherDeptCode: { valueNotEquals: "Please select Department!" },
+                    TeacherCreditLimit: {
+                        required: "Enter a Cridit Limit.",
+                        number: "Enter numbers"
+                    }
+                }
+
+            });
+            
+        });
+    </script>
+}

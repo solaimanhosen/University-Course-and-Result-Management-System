@@ -1,0 +1,78 @@
+﻿
+@{
+    ViewBag.Title = "CourseStatistic";
+}
+
+<form id="SaveDepartment" class ="well form-horizontal" method="POST" >
+    <fieldset>
+        
+        <legend><center><h2><b>COURSE STATISTICES</b></h2></center></legend><br>
+
+        <!-- Text input-->
+
+        <div class="form-group">
+            <label for="Dept" class="col-md-4 control-label">DEPARTMENT</label>  
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                   <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span> 
+                    <select id="Dept" name="Dept" class="form-control selectpicker">
+                        <option>---SELECT---</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <!-- Form Name -->
+        <legend><center><h2><b>COURSE INFORMATION</b></h2></center></legend><br>
+
+
+        <table class="table table-fixed">
+            <thead>
+            <tr>
+                <th class="col-xs-2">SL</th>
+                <th class="col-xs-2">COURSE CODE</th>
+                <th class="col-xs-2">COURSE NAME</th>
+                <th class="col-xs-2">SEMESTER</th>
+                <th class="col-xs-2">ASSIGNED TO</th>
+            </tr>
+            </thead>
+        </table>
+        <div class="table-responsive" div style="overflow: scroll; height: 200px;">
+
+            <table id="myTable" class="table table-fixed">
+
+                <tbody>
+                <tr>
+                    <td class="col-xs-2">&nbsp;&nbsp;1</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                </tr>
+                <tr>
+                    <td class="col-xs-2">&nbsp;&nbsp;1</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                </tr>
+                <tr>
+                    <td class="col-xs-2">&nbsp;&nbsp;1</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                </tr>
+                <tr>
+                    <td class="col-xs-2">&nbsp;&nbsp;1</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                    <td class="col-xs-2">&nbsp;&nbsp;CSE</td>
+                    <td class="col-xs-2">Computer Science & Engineering</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </fieldset> 
+        
+</form>
+

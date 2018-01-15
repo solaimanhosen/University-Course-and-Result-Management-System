@@ -1,0 +1,88 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "ViewCourseSatistics";
+    List<Department> deptList = ViewBag.deptList;
+}
+
+<div class="Container">
+    <form id="ViewCourseStatistics" name="ViewCourseStatistics" class="well form-horizontal" method="POST">
+        <fieldset>
+           
+            <legend><center><h2><b>VIEW COURSE STATICS </b></h2></center></legend><br>
+
+            <div class="form-group">
+                <label for="DeptCode" class="col-md-4 control-label">DEPARTMENT</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="DeptCode" name="DeptCode">
+                            <option value="">
+                                ---SELECT--
+                            </option>
+                            @if (deptList != null)
+                            {
+                                foreach (Department department in deptList)
+                                {
+                                    <option value="@department.DeptCode">@department.DeptName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <legend><center><h2><b>Course Information </b></h2></center></legend><br>
+            <table class="table table-fixed">
+                <thead>
+                    <tr>
+                        <th class="col-xs-2">SL</th>
+                        <th class="col-xs-2">&nbsp;CODE</th>
+                        <th class="col-xs-3">&nbsp;&nbsp;NAME</th>
+                        <th class="col-xs-2">&nbsp;&nbsp;&nbsp;&nbsp;SEMESTER</th>
+                        <th class="col-xs-3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ASSIGNED TO</th>
+                    </tr>
+                </thead>
+                <tbody id="CourseSatisticTableBody">
+                    
+                </tbody>
+            </table>
+
+        </fieldset>
+    </form>
+
+
+
+</div>
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            //$("#studentTable").hide();
+            
+
+            $("#DeptCode").change(function () {
+                $("#CourseSatisticTableBody").empty();
+                var DeptCode = $("#DeptCode").val();
+                var json = { DeptCode: DeptCode };
+                var serial = 1;
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GetCoursesByDepartmentCode", "Course")',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $("#CourseSatisticTableBody").append('<tr><td class="col-xs-2">' + serial + '</td><td class="col-xs-2">' + value.CourseCode + '</td><td class="col-xs-3">' + value.CourseName + '</td><td class="col-xs-2">' + value.CourseSemester + '</td><td class="col-xs-3">' + value.CourseAssignedTo + '</td></tr>');
+                            serial++;
+                        });
+                        //$("#studentTable").show();
+                        //alert(data.CourseCode);
+                    }
+                });
+            });
+        });
+    </script>
+}

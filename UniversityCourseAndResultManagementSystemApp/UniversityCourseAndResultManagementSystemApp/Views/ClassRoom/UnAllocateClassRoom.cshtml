@@ -1,0 +1,30 @@
+﻿
+@{
+    ViewBag.Title = "UnAllocateClassRoom";
+    string message = ViewBag.message;
+}
+
+<div class="container">
+
+    <form id="EnrollCourse" class="well form-horizontal" method="POST">
+        <fieldset>
+
+            <legend><center><h2><b>UNALLOCATE ALL CLASS ROOM</b></h2></center></legend><br>
+            
+            @if (message != null)
+            {
+                <h3 align="center">@message</h3>
+            }
+
+
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 54%;">
+                    <br>
+                    <button type="submit" class="btn btn-warning"> UNALLOCATE ALL CLASS ROOM <span class="glyphicon glyphicon-send"></span></button>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+

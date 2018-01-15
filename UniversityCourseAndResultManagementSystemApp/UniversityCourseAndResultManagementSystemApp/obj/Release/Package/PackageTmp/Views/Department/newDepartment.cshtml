@@ -1,0 +1,82 @@
+﻿
+@{
+    ViewBag.Title = "newDepartment";
+    string message = ViewBag.message;
+}
+
+
+
+<div class="main container">
+
+    <div class="ui accordion">
+
+        <div data-demo="#form-signup_v3" class="demo">
+
+            <div class="content active">
+
+                <div class="ui two column relaxed grid basic segment">
+                    <div class="column">
+                        @if (message != null)
+                        {
+                            <h4>@message</h4>
+                        }
+                        
+                        <div class="ui form segment">
+                            <form id="form-signup_v3" name="form-signup_v3" method="POST">
+
+                                <div class="field">
+                                    <label for="DeptCode">DEPARTMENT CODE</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="DeptCode"
+                                               name="DeptCode"
+                                               type="text"
+                                               data-validation="[L>=6, L<=18, MIXED]"
+                                               data-validation-message="$ is required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters">
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="DeptName">DEPARTMENT NAME</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="DeptName"
+                                               name="DeptName"
+                                               type="text"
+                                               data-validation="[L>=6, L<=18, MIXED]"
+                                               data-validation-message="$ is required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters">
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <input type="submit" class="ui blue submit button" value="Sign up!">
+
+                            </form>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    
+<script src="~/js/vendor.min.86d1279d.js"></script>
+<script src="~/js/jquery.validation.min.js"></script>
+<script src="~/js/form.validation.script.js"></script>
+}
+

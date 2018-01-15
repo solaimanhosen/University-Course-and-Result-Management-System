@@ -1,0 +1,224 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "CourseAssignToTeacher";
+    List<Department> deptList = ViewBag.deptList;
+    string message = ViewBag.message;
+}
+
+    <form id="CourseAssignToTeacher" name="CourseAssignToTeacher" class="well form-horizontal" method="POST">
+    <fieldset>
+        <!-- Form Name -->
+        <legend><center><h2><b>COURSE ASSIGN TO TEACHER</b></h2></center></legend><br>
+
+        @if (message != null)
+        {
+            <h3 align="center">@message</h3>
+        }
+
+        <div class="form-group">
+            <label for="DeptCode" class="col-md-4 control-label">Depertment</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <select class="form-control selectpicker" id="DeptCode" name="DeptCode">
+                        <option value="default">
+                            ---SELECT--
+                        </option>
+                        @if (deptList != null)
+                        {
+                            foreach (Department department in deptList)
+                            {
+                                <option value="@department.DeptCode">@department.DeptName</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="TeacherId" class="col-md-4 control-label">Teacher</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <select class="form-control selectpicker" id="TeacherId" name="TeacherId">
+                        <option value="default">
+                            ---SELECT--
+                        </option>
+
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="TeacherCreditLimit" class="col-md-4 control-label">Credit to be Taken</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <input name="TeacherCreditLimit" id="TeacherCreditLimit" placeholder="" class="form-control" type="text" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="TeacherCreditRemaining" class="col-md-4 control-label">Remaining Credit</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <input name="TeacherCreditRemaining" id="TeacherCreditRemaining" placeholder="" class="form-control" type="text" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="CourseCode" class="col-md-4 control-label">Course Code</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                    <select class="form-control selectpicker" id="CourseCode" name="CourseCode">
+                        <option value="default">
+                            ---SELECT--
+                        </option>
+                        
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            <label for="CourseName" class="col-md-4 control-label">Name</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <input name="CourseName" id="CourseName" placeholder="" class="form-control" type="text" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="CourseCredit" class="col-md-4 control-label"> Credit</label>
+            <div class="col-md-4 inputGroupContainer">
+                <div class="input-group">
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                    <input name="CourseCredit" id="CourseCredit" placeholder="" class="form-control" type="text" readonly />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-4 control-label"></label>
+            <div class="col-md-4" style="margin-left: 54%;">
+                <br>
+                <button type="submit" class="btn btn-warning"> Assign  <span class="glyphicon glyphicon-send"></span></button>
+            </div>
+        </div>
+
+
+
+    </fieldset>
+</form>
+
+
+
+
+
+@section scripts
+{
+<script src="~/Scripts/jquery-3.2.1.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#DeptCode").change(function () {
+                var DeptCode = $("#DeptCode").val();
+                $("#TeacherId").empty();
+                $("#TeacherId").append('<option value="default">---SELECT---</option>');
+                var json = {DeptCode: DeptCode };
+                $.ajax({
+                    type: "POST",
+                    url: '/Teacher/GetTeacherByDepartment',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function(data) {
+                        $.each(data, function(key, value) {
+                            $("#TeacherId").append('<option value=' + value.TeacherId + '>' + value.TeacherName + '</option>');
+                        });
+                    }
+                });
+                $("#CourseCode").empty();
+                $("#CourseCode").append('<option value="default">---SELECT---</option>');
+                var json = { DeptCode: DeptCode };
+                $.ajax({
+                    type: "POST",
+                    url: '/Teacher/GetCoursesByDepartmentCode',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $("#CourseCode").append('<option value=' + value.CourseCode + '>' + value.CourseCode + '</option>');
+                        });
+                    }
+                });
+            });
+            $("#TeacherId").change(function () {
+                var TeacherId = $("#TeacherId").val();
+                $('input[name="TeacherCreditLimit"]').val("");
+                $('input[name="TeacherCreditRemaining"]').val("");
+                var json = { TeacherId: TeacherId };
+                $.ajax({
+                    type: "POST",
+                    url: '/Teacher/GetTeacherByTeacherId',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $('input[name="TeacherCreditLimit"]').val(value.TeacherCreditLimit);
+                            $('input[name="TeacherCreditRemaining"]').val(value.TeacherCreditRemaining);
+                        });
+                    }
+                });
+            });
+            $("#CourseCode").change(function () {
+                var CourseCode = $("#CourseCode").val();
+                $('input[name="CourseName"]').val("");
+                $('input[name="CourseCredit"]').val("");
+                var json = { CourseCode: CourseCode };
+                $.ajax({
+                    type: "POST",
+                    url: '/Teacher/GetCourseByCourseCode',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $('input[name="CourseName"]').val(value.CourseName);
+                            $('input[name="CourseCredit"]').val(value.CourseCredit);
+                        });
+                    }
+                });
+            });
+
+
+
+            $.validator.addMethod("valueNotEquals", function (value, element, arg) {
+                return arg !== value;
+            }, "Value must not equal arg.");
+            $("#CourseAssignToTeacher").validate({
+                rules: {
+                    
+                    DeptCode: { valueNotEquals: "default" },
+                    TeacherId: { valueNotEquals: "default" },
+                    CourseCode: { valueNotEquals: "default" }
+                },
+                messages: {
+                    
+                    DeptCode: { valueNotEquals: "Please select Department!" },
+                    TeacherId: { valueNotEquals: "Please select Teacher!" },
+                    CourseCode: { valueNotEquals: "Please select Course!" }
+                }
+
+            });
+        });
+    </script>
+}

@@ -1,0 +1,91 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "ClassRoomInfo";
+    List<Department> deptList = ViewBag.deptList;
+}
+
+<div id="container">
+    <form id="SaveCourse" class="well form-horizontal" method="GET">
+        <fieldset>
+
+            <legend><center><h2><b>CLASS ROOM AND SCHEDULE</b></h2></center></legend><br>
+
+
+            <div class="form-group">
+                <label for="DeptCode" class="col-md-4 control-label">DEPARTMENT</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="DeptCode" name="DeptCode">
+                            <option value="">
+                                ---SELECT--
+                            </option>
+                            @if (deptList != null)
+                            {
+                                foreach (Department department in deptList)
+                                {
+                                    <option value="@department.DeptCode">@department.DeptName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Success message -->
+            <div class="alert alert-success" role="alert" id="success_message">Success <i class="glyphicon glyphicon-thumbs-up"></i> Success!.</div>
+            
+            
+            <table class ="table table-fixed">
+                <thead>
+                <tr>
+                    <th class="col-xs-2">SL</th>
+                    <th class="col-xs-2">COURSE CODE</th>
+                    <th class="col-xs-4">COURSE NAME</th>
+                    <th class="col-xs-4" >SCHEDULE INFO</th>
+                </tr>
+                </thead>
+                <tbody id="classScheduleTableBody">
+                
+                </tbody>
+            </table>
+
+        </fieldset>
+    </form>
+
+</div>
+
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+
+
+            $("#DeptCode").change(function () {
+
+                
+                $("#classScheduleTableBody").empty();
+                var DeptCode = $("#DeptCode").val();
+                var json = { DeptCode: DeptCode };
+                var serial = 1;
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GetRoomScheduleByDepartment", "ClassRoom")',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $("#classScheduleTableBody").append('<tr><td class="col-xs-2">' + serial + '</td><td class="col-xs-2">' + value.CourseCode + '</td><td class="col-xs-4">' + value.CourseName + '</td><td class="col-xs-4">' + value.CourseSchedule + '</td></tr>');
+                            serial++;
+                        });
+                    }
+
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,146 @@
+﻿
+@{
+    ViewBag.Title = "ViewResult";
+    List<string> regNoList = ViewBag.regNoList;
+}
+
+<div class="container">
+
+
+    <form id="ViewResult" class="well form-horizontal" method="POST">
+        <fieldset>
+            
+            <legend><center><h2><b>VIEW RESULT</b></h2></center></legend><br>
+
+           
+            
+            <div class="form-group">
+                <label for="StudentRegNo" class="col-md-4 control-label">Student.Reg.NO</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+
+                        <select class="form-control selectpicker" id="StudentRegNo" name="StudentRegNo">
+                            <option value="">
+                                ---SELECT--
+                            </option>
+                            @if (regNoList != null)
+                            {
+                                foreach (string regNo in regNoList)
+                                {
+                                    <option value="@regNo">@regNo</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="StudentName" class="col-md-4 control-label">Name</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentName" id="StudentName" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+           
+            <div class="form-group">
+                <label for="Email" class="col-md-4 control-label">Email</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentEmail" id="StudentEmail" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="StudentDept" class="col-md-4 control-label">Depertment</label>
+                <div class="col-md-4 inputGroupContainer">
+                    <div class="input-group">
+                        <span class="input-group-addon"><i class="glyphicon glyphicon-list"></i></span>
+                        <input name="StudentDept" id="StudentDept" placeholder="" class="form-control" type="text" />
+                    </div>
+                </div>
+            </div>
+            
+           
+            <div class="form-group">
+                <label class="col-md-4 control-label"></label>
+                <div class="col-md-4" style="margin-left: 54%;">
+                    <br>
+                   <input type="button" value="Make PDF" onclick="location.href = '@Url.Action("GenerateResultPDF", "Result")'" class="btn btn-warning"/> 
+                    
+
+                </div>
+            </div>
+            
+            <table class ="table table-fixed">
+                <thead>
+                <tr>
+                    <th class="col-xs-3">SL</th>
+                    <th class="col-xs-3">COURSE CODE</th>
+                    <th class="col-xs-3">COURSE NAME</th>
+                    <th class="col-xs-3" >GRADE</th>
+                </tr>
+                </thead>
+                <tbody id="resultTableBody">
+                
+                </tbody>
+            </table>
+                
+           
+
+
+        </fieldset>
+    </form>
+</div>
+
+@section scripts
+{
+    <script>
+    $(document).ready(function () {
+
+        
+        $("#StudentRegNo").change(function () {
+
+            var StudentRegNo = $("#StudentRegNo").val();
+            var json = { StudentRegNo: StudentRegNo };
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("GetStudentByStudentRegNo", "Student")',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $('input[name="StudentName"]').val(data.StudentName);
+                        $('input[name="StudentEmail"]').val(data.StudentEmail);
+                        $('input[name="StudentDept"]').val(data.StudentDept);
+                    }
+
+            });
+            $("#resultTableBody").empty();
+                var StudentRegNo = $("#StudentRegNo").val();
+                var json = { StudentRegNo: StudentRegNo };
+            var serial = 1;
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GetResultByStudent", "Result")',
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(json),
+                    success: function (data) {
+                        $.each(data, function (key, value) {
+                            $("#resultTableBody").append('<tr><td class="col-xs-3">' + serial + '</td><td class="col-xs-3">' + value.CourseCode + '</td><td class="col-xs-3">' + value.CourseName + '</td><td class="col-xs-3">' + value.CourseGrade + '</td></tr>');
+                            serial++;
+                        });
+                    }
+
+                });
+            });
+        });
+    </script>
+}
+
+

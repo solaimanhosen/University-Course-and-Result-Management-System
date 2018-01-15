@@ -1,0 +1,197 @@
+﻿
+@{
+    ViewBag.Title = "Home";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>East West University</title>
+    <!-- Stylesheets -->
+    <link rel="shortcut icon" type="image/png" href="images/favicon.png" />
+    <link href="~/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/css/style.css" rel="stylesheet" />
+    <!-- Responsive -->
+    <link href="~/css/responsive.css" rel="stylesheet" />
+    
+
+    
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    
+    <style>
+        #success_message{ display: none;}
+        #error_message{ display: none;}
+        
+
+        .table-fixed {
+            width: 80%;
+            background-color: #f3f3f3;
+            margin-left: 10%;
+            margin-right: 10%;
+        }
+        .table-fixed thead tr th {
+            background-color: #f39c12;
+            border-color: #e67e22;
+        }
+        .table-fixed thead {
+            width: 97%;
+        }
+
+        .table-fixed tbody {
+            height: 230px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .table-fixed thead, .table-fixed tbody, .table-fixed tr, .table-fixed td, .table-fixed th {
+            display: block;
+        }
+
+        .table-fixed tbody td, .table-fixed thead > tr > th {
+            float: left;
+            border-bottom-width: 0;
+        }
+        
+    </style>
+    
+    
+</head>
+<body class="theme-green">
+    <div class="page-wrapper">
+        <!-- Preloader -->
+        <div class="preloader"></div>
+        <!-- Main Header / Style One-->
+
+        <header class="main-header header-style-one">
+            <!-- Header Top
+            <div class="header-top">
+            <div class="container clearfix ptn pbn">
+            <!--Top Left
+            <div class="top-left pull-left">
+            <ul class="info-nav clearfix">
+            <li>
+            <!--Social Links
+            <div class="social-links pull-left"> <span class="text-theme-color">Follow Us</span> : <a href="#"><span class="fa fa-facebook-f"></span></a> <a href="#"><span class="fa fa-twitter"></span></a> <a href="#"><span class="fa fa-google-plus"></span></a> <a href="#"><span class="fa fa-linkedin"></span></a> </div>
+            </li>
+            <li><a href="mailto:yourmail@gmail.com"><span class="icon icon-Mail mr10"></span>Opening Hours</a></li>
+            </ul>
+            </div>
+            <!--Top Right
+            <div class="top-right pull-right clearfix">
+            <!--Lang Bar
+            <ul class="info-nav clearfix">
+                <li><a href="#"><i class="icon icon-Phone mr10 text-theme-color"></i><span class="ml5">Emergency Line</span> (+123) 2456 987</a></li>
+                <li><a href="#" class="text-uppercase appoinment"><i class="icon icon-Pen mr10 text-theme-color "></i> Make an appoinment</a></li>
+            </ul>
+            </div>
+            </div>
+            </div>
+            Header Top End -->
+            <!--Header-Main Box-->
+            <div class="header-mainbox">
+                <div class="container ptn pbn">
+                    <div class="clearfix">
+                        <!--  <div class="pull-left">
+                            <div class="logo"> <a href="index-mp-layout1.html"><img src="images/logo.png" alt="" title="Green"></a> </div>
+                        </div> -->
+                        <div class="outer-box clearfix">
+                            <!-- Main Menu -->
+                            <nav class="main-menu logo-outer">
+                                <div class="navbar-header">
+                                    <!-- Toggle Button -->
+                                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button>
+                                </div>
+                                <div class="navbar-collapse collapse clearfix">
+                                    <ul class="navigation clearfix">
+                                        <li class="">
+                                            @Html.ActionLink("HOME", "Index", "Home")
+                                        </li>
+
+                                        <li class="dropdown">
+                                            <a href="#">DEPARTMENT</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("SAVE DEPARTMENT", "SaveDepartment", "Department")</li>
+                                                <li>@Html.ActionLink("VIEW ALL DEPARTMENT", "ViewDepartment", "Department")</li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#">COURSE</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("ADD COURSE", "SaveCourse", "Course")</li>
+                                                <li>@Html.ActionLink("COURSE STATISTICES", "ViewCourseSatistics", "Course")</li>
+                                                <li>@Html.ActionLink("UNASSIGNED ALL COURSES", "UnassignAllCourses", "Course")</li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#">TEACHER</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("ADD TEACHER", "SaveTeacher", "Teacher")</li>
+                                                <li>@Html.ActionLink("COURSE ASSIGNED TO TEACHER", "CourseAssignToTeacher", "Teacher")</li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#">STUDENT</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("REGISTER STUDENT", "RegisterStudent", "Student")</li>
+                                                <li>@Html.ActionLink("ENDROLL IN COURSE", "EnrollCourse", "Student")</li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#">CLASS ROOM</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("ALLOCATE CLASS ROOM", "AllocateClassRoom", "ClassRoom")</li>
+                                                <li>@Html.ActionLink("CLASS SCHEDULE AND ROOM INFORMATION", "ClassRoomInfo", "ClassRoom")</li>
+                                                <li>@Html.ActionLink("UNALLOCATE CLASS ROOM", "UnAllocateClassRoom", "ClassRoom")</li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#">RESULT</a>
+                                            <ul>
+                                                <li>@Html.ActionLink("SAVE STUDENT RESULT", "SaveStudentResult", "Result")</li>
+                                                <li>@Html.ActionLink("VIEW RESULT", "ViewResult", "Result")</li>
+                                            </ul>
+                                        </li>
+                                        @Html.Partial("_LoginPartial")
+                                    </ul>
+
+                                </div>
+                            </nav>
+                            <!-- Main Menu End-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--Header Main Box End-->
+        </header>
+
+        @RenderBody()
+
+    </div>
+
+    <!--End Main Header -->
+    <div class="scroll-to-top scroll-to-target" data-target=".main-header"><span class="fa fa-long-arrow-up"></span></div>
+
+   
+
+<script src="~/js/jquery.js"></script>
+<script src="~/js/all-jquery.js"></script>
+<script src="~/js/script.js"></script>
+    
+
+
+@Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+    
+
+    
+</body>
+</html>
+

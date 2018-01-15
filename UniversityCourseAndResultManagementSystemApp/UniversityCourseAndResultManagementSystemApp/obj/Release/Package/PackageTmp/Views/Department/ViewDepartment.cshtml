@@ -1,0 +1,54 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "ViewDepartment";
+    List<Department>deptList = ViewBag.deptList;
+}
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4>
+                    <div style="text-align: center;" >VIEW ALL DEPARTMENT</div>
+                </h4>
+            </div>
+            <table class="table table-fixed">
+                <thead>
+                <tr>
+                    <th class="col-xs-2">SL</th>
+                    <th class="col-xs-4">DEPARTMENT CODE</th>
+                    <th class="col-xs-6">DEPARTMENT NAME</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (deptList != null)
+                {
+                    for (int i = 0; i < deptList.Count(); i++)
+                    {
+                        <tr>
+                            <td class="col-xs-2">@(i+1)</td>
+                            <td class="col-xs-4">@deptList[i].DeptCode</td>
+                            <td class="col-xs-6">@deptList[i].DeptName</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+    
+    
+
+
+    
+
+
+
+
+
+
+

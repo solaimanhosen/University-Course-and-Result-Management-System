@@ -1,0 +1,178 @@
+﻿@using UniversityCourseAndResultManagementSystemApp.Models
+
+@{
+    ViewBag.Title = "AddTeacher";
+    List<Department> deptList = ViewBag.deptList;
+    List<string> designationList = ViewBag.designationList; 
+    string message = ViewBag.message;
+}
+
+<div class="main container">
+
+    <div class="ui accordion">
+
+        <div data-demo="#form-signup_v3" class="demo">
+
+            <div class="content active">
+
+                <div class="ui two column relaxed grid basic segment">
+                    <div class="column">
+                        @if (message != null)
+                        {
+                            <h4>@message</h4>
+                        }
+                        <div class="ui form segment">
+                            <form id="form-signup_v3" name="form-signup_v3" method="POST">
+
+                                <div class="field">
+                                    <label for="TeacherName">NAME</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="TeacherName"
+                                               name="TeacherName"
+                                               type="text"
+                                               data-validation="[L>=6, L<=18, MIXED]"
+                                               data-validation-message="$ is Required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters" />
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="TeacherAddress">ADDRESS</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="TeacherAddress"
+                                               name="TeacherAddress"
+                                               type="text"
+                                               data-validation="[L>=6, L<=18, MIXED]"
+                                               data-validation-message="$ is Required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters" />
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label for="TeacherEmail">EMAIL</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="TeacherEmail"
+                                               name="TeacherEmail"
+                                               type="text"
+                                               data-validation="[EMAIL]"
+                                               data-toggle="popover"
+                                               data-content="The email that will be associated with your account.">
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <label for="TeacherContactNo">CONTACT NO</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="TeacherContactNo"
+                                               name="TeacherContactNo"
+                                               type="text"
+                                               data-validation="[L>=6, L<=18, MIXED]"
+                                               data-validation-message="$ is Required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters" />
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="field select">
+                                    <label for="TeacherDesignation">DESIGNATION<strong class="ui font">*</strong></label>
+                                    <div class="ui left labeled input">
+
+                                        <select id="TeacherDesignation"
+                                                name="TeacherDesignation"
+                                                data-validation="[NOTEMPTY]"
+                                                data-validation-message="You have to select a Semester.">
+                                            <option value="">
+                                                ---SELECT--
+                                            </option>
+                                            @if (designationList != null)
+                                            {
+                                                foreach (string data in designationList)
+                                                {
+                                                    <option value="@data">@data</option>
+                                                }
+                                            }
+                                        </select>
+
+                                    </div>
+                                </div>
+
+                                <div class="field select">
+                                    <label for="TeacherDeptCode">DEPARTMENT<strong class="ui font">*</strong></label>
+                                    <div class="ui left labeled input">
+
+                                        <select id="TeacherDeptCode"
+                                                name="TeacherDeptCode"
+                                                data-validation="[NOTEMPTY]"
+                                                data-validation-message="You have to select a Department.">
+                                            <option value="">
+                                                ---SELECT--
+                                            </option>
+                                            @if (deptList != null)
+                                            {
+                                                foreach (Department department in deptList)
+                                                {
+                                                    <option value="@department.DeptCode">@department.DeptName</option>
+                                                }
+                                            }
+                                        </select>
+
+                                    </div>
+                                </div>
+
+                                <div class="field">
+                                    <label for="TeacherCreditLimit">CREDIT TO BE TAKEN</label>
+                                    <div class="ui left labeled input">
+
+                                        <input id="TeacherCreditLimit"
+                                               name="TeacherCreditLimit"
+                                               type="text"
+                                               data-validation="[L>=1, L<=18, MIXED]"
+                                               data-validation-message="$ is Required"
+                                               data-toggle="popover"
+                                               data-content="You can use letters and numbers, no space or special characters" />
+
+                                        <div class="ui corner label">
+                                            <i class="asterisk icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <input type="submit" class="ui blue submit button" value="SAVE">
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+
+    <script src="~/js/vendor.min.86d1279d.js"></script>
+    <script src="~/js/jquery.validation.min.js"></script>
+    <script src="~/js/form.validation.script.js"></script>
+}
+
