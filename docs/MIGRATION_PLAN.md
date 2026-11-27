@@ -1,14 +1,35 @@
 # Migration Plan: University Course & Result Management System → ASP.NET Core
 
 Step-by-step plan to rebuild the 2017 ASP.NET MVC 5 app as an **ASP.NET Core 10 Web API +
-Angular 22 SPA**. It follows the stack and conventions in `../SETUP.md` (the environment setup
+Angular 22 SPA**, deployed to AWS through a CI/CD pipeline. It follows the stack and conventions in `../SETUP.md` (the environment setup
 in Part A of that file is a prerequisite). `SETUP.md` lives outside this repository, so every
 snippet the plan needs from it is repeated here. Deviations from `SETUP.md` are called out where
 they happen.
 
-Original spec: `Specification of University Course and Result Management System (1).pdf`
-(14 user stories). The spec is the source of truth. Where the 2017 code disagrees with it, the
-new app follows the spec.
+Original spec: `docs/spec.pdf` (14 user stories). The spec is the source of truth. Where the
+2017 code disagrees with it, the new app follows the spec.
+
+---
+
+## Progress
+
+Last updated: 2026-11-27. A step is marked ✅ only after it is finished and checked, and this
+table is updated in the same commit.
+
+| Phase | Status |
+|---|---|
+| 0 — Prepare the repository | **In progress.** 0.1–0.3 done; 0.4 and 0.5 remaining |
+| 1 — API foundation | Not started |
+| 2 — Data model and migrations | Not started |
+| 3 — Authentication and authorization | Not started |
+| 4 — Feature endpoints | Not started |
+| 5 — Angular foundation | Not started |
+| 6 — Angular feature pages | Not started |
+| 7 — Testing and quality gates | Not started |
+| 8 — Packaging and CI | Not started |
+| 9 — AWS infrastructure | Not started |
+| 10 — Continuous deployment | Not started |
+| 11 — Cut-over and cleanup | Not started |
 
 ---
 
@@ -19,17 +40,17 @@ new app follows the spec.
 | Runtime | **.NET 10 LTS** (SDK 10.0.1xx, pinned in `global.json`) |
 | API | ASP.NET Core **Minimal APIs**: route groups, `TypedResults`, feature folders |
 | Validation | Built-in `AddValidation()` + DataAnnotations; business rules return Problem Details |
-| Data | **EF Core 10** + SQL Server 2025 (Docker). New, clean schema built with code-first migrations |
+| Data | **EF Core 10** + SQL Server: a Docker container locally, **Amazon RDS for SQL Server Express** in production, both on the same major version. New, clean schema built with code-first migrations |
 | Auth | **ASP.NET Core Identity** + HttpOnly cookie for the SPA (same origin); roles **Admin / Staff / Teacher** |
 | PDF | **QuestPDF** (Community license) replaces iTextSharp 5 (AGPL) |
 | API docs | Built-in OpenAPI + Scalar UI; OpenAPI file also generated at build time for the TypeScript types |
 | Observability | `ILogger` + OpenTelemetry (traces, metrics, logs over OTLP) → Aspire Dashboard container locally |
 | Frontend | **Angular 22**: standalone, zoneless, OnPush, **Signal Forms** (stable in v22), `httpResource`, **Angular Material** |
 | Tests | xUnit v3, `WebApplicationFactory`, Testcontainers (SQL Server), Respawn, Shouldly · Vitest · Playwright |
-| Packaging | One container image: the API serves the built SPA from `wwwroot`. Built with `dotnet publish /t:PublishContainer` |
-| CI | GitHub Actions + Dependabot + CodeQL |
-| Deployment | **Decided later.** The plan ends with a production-ready image and CI. Options are in Appendix C |
-| Git | Work on branch `migration/aspnet-core` in this repository. `master` keeps the 2017 code until the final PR |
+| Packaging | One app image: the API serves the built SPA from `wwwroot`. Built with `dotnet publish /t:PublishContainer`. A second, small image holds the EF migration bundle |
+| CI/CD | GitHub Actions: CI on every push and PR, deployment on every push to `main`. AWS access through OIDC, with no keys stored in GitHub. Dependabot + CodeQL |
+| Deployment | **AWS, `us-east-1`.** One EC2 instance runs Caddy (HTTPS) and the app with Docker Compose. RDS holds the database, ECR the images, SSM Parameter Store the secrets, and SSM Run Command performs the deploys. Created by hand in Phase 9. Costs and alternatives are in Appendix C |
+| Git | Work on branch `migration/aspnet-core` in this repository. `main` keeps the 2017 code until the final PR |
 
 **Deviations from `SETUP.md`** (each one is deliberate):
 
@@ -126,13 +147,19 @@ development sample data, because departments are user data that story 1 creates 
 ```
 University-Course-and-Result-Management-System/
 ├── .github/
-│   ├── workflows/ci.yml
+│   ├── workflows/ci.yml                # build, test and lint on every push and PR
+│   ├── workflows/deploy.yml            # CI → images to ECR → deploy to EC2 through SSM
 │   └── dependabot.yml
+├── deploy/                             # what runs on the EC2 instance (Phase 10)
+│   ├── compose.aws.yaml                # Caddy + app + one-shot migrator
+│   ├── Caddyfile
+│   ├── deploy.sh                       # run on the instance by SSM
+│   └── migrator.Dockerfile             # wraps the EF migration bundle
 ├── docs/
 │   ├── MIGRATION_PLAN.md               # this file (moved here in Phase 0)
 │   ├── spec.pdf                        # renamed copy of the spec
 │   └── legacy-sql/                     # the two 2017 dumps, kept for reference
-├── legacy/                             # 2017 MVC solution (git mv). Deleted in Phase 9
+├── legacy/                             # 2017 MVC solution (git mv). Deleted in Phase 11
 ├── openapi/                            # University.Api.json, written by the API build, committed
 ├── src/
 │   ├── University.Api/                 # ASP.NET Core 10 Minimal API
@@ -142,7 +169,8 @@ University-Course-and-Result-Management-System/
 │   └── University.Api.IntegrationTests/
 ├── .editorconfig  .gitignore  .gitattributes
 ├── .env.example                        # MSSQL_SA_PASSWORD=...  (real .env is git-ignored)
-├── compose.yaml                        # SQL Server 2025 + Aspire Dashboard
+├── compose.yaml                        # local development: SQL Server + Aspire Dashboard
+├── compose.prod.yaml                   # local rehearsal of the production layout (8.4)
 ├── Directory.Build.props
 ├── Directory.Packages.props
 ├── dotnet-tools.json                   # dotnet-ef
@@ -285,7 +313,7 @@ All routes are under `/api`. Responses are DTOs. Errors are RFC 7807 Problem Det
 
 ## Phase 0 — Prepare the repository
 
-**0.1 Check prerequisites.**
+**0.1 Check prerequisites.** ✅ Done (SDK 10.0.115, Node 24.22, Angular CLI 22.3, Compose 2.40)
 
 ```bash
 dotnet --list-sdks        # 10.0.1xx
@@ -298,15 +326,16 @@ gh auth status
 Doing the `SETUP.md` Part B sample first is recommended (it isn't in this folder yet). It's the
 same pattern at a smaller scale.
 
-**0.2 Create the branch.**
+**0.2 Create the branch.** ✅ Done
 
 ```bash
 cd ~/Development-Projects/ASP-dot-NET-CORE-Projects/University-Course-and-Result-Management-System
-git switch master && git pull
+git switch main && git pull
 git switch -c migration/aspnet-core
 ```
 
-**0.3 Move the legacy code and clean the repository.**
+**0.3 Move the legacy code and clean the repository.** ✅ Done (commit `51c5ee8`, which also
+added `.gitignore` from 0.4)
 
 ```bash
 mkdir -p legacy docs/legacy-sql
@@ -323,7 +352,7 @@ git ls-files legacy | grep -E '/(bin|obj|packages)/|\.suo$|\.user$|\.mdf$|\.ldf$
 
 ```bash
 dotnet new globaljson --sdk-version 10.0.100 --roll-forward latestFeature
-dotnet new gitignore
+# dotnet new gitignore                       # already done in 0.3
 dotnet new editorconfig
 dotnet new sln -n University                 # → University.slnx
 dotnet new tool-manifest && dotnet tool install dotnet-ef --version "10.*"
@@ -364,6 +393,7 @@ for any transitive package would fail every build until a fix ships.
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.0" />
@@ -425,7 +455,11 @@ volumes:
   university-sql-data:
 ```
 
-Commit: `chore: move 2017 app to legacy/, add .NET 10 solution skeleton`.
+Development, tests and production should run the same SQL Server major version. Production is
+RDS for SQL Server **Express** (Phase 9.5). If RDS doesn't offer SQL Server 2025 for the Express
+edition yet, change the image tag to `2022-latest` here, and the test fixture (2.6) follows it.
+
+Commit: `chore: add .NET 10 solution skeleton and Compose file`.
 
 **Done when:** `dotnet build` succeeds on the empty solution, `docker compose up -d` shows
 `university-sql` as healthy, and `git status` shows no `.env`, `bin/` or `obj/`.
@@ -523,7 +557,8 @@ seeders when `Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Inside
 
 **1.6 Observability.** `AddOpenTelemetry().WithTracing(...)/.WithMetrics(...)` with the
 ASP.NET Core, HttpClient and SqlClient instrumentation, plus `.UseOtlpExporter()`. Point
-`OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4317` in `launchSettings.json`.
+`OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4317` in `launchSettings.json`. Register the
+exporter only when that variable is set, so production runs without a collector (see 8.6).
 
 **1.7 CI from the first commit.** Add `.github/workflows/ci.yml` with the `api` job from 8.5
 (restore, build, test) now, so every later commit on the branch is checked. The `web` job joins
@@ -576,7 +611,7 @@ Check the generated SQL for the filtered index, the check constraints and the `R
 pass, so the test infrastructure is built here. Create `tests/University.Api.UnitTests` and
 `tests/University.Api.IntegrationTests` (xUnit v3) and add them to the solution. In the
 integration project, add a `WebApplicationFactory<Program>` subclass and an assembly fixture that
-starts one `MsSqlContainer` (`mcr.microsoft.com/mssql/server:2025-latest`) per test run and
+starts one `MsSqlContainer` (the same image tag as `compose.yaml`, see 0.5) per test run and
 applies the migrations once. `Respawn` resets the data between tests but keeps the lookup tables,
 the roles and `__EFMigrationsHistory`.
 
@@ -651,6 +686,21 @@ roles, change roles, lock or unlock.
 **3.6 Test helper.** Add an authenticated `HttpClient` helper per role to the integration tests.
 It creates the user, logs in, reads the `XSRF-TOKEN` cookie and sets the `X-XSRF-TOKEN` header.
 Every feature test in Phase 4 uses it.
+
+**3.7 Data Protection keys.** The auth cookie and the antiforgery tokens are encrypted with
+ASP.NET Core Data Protection keys. By default the keys live in the container's file system, so
+every deployment would replace them and sign all users out. Store them in the database instead:
+
+```csharp
+services.AddDataProtection()
+    .SetApplicationName("University")
+    .PersistKeysToDbContext<UniversityDbContext>();
+```
+
+`UniversityDbContext` implements `IDataProtectionKeyContext` (one `DbSet<DataProtectionKey>`).
+Add a migration for the new `DataProtectionKeys` table, and add the table to Respawn's ignore
+list (2.6). The keys are stored unencrypted in that table and ASP.NET Core logs a warning about
+it. That is acceptable here because the production database is not reachable from the internet.
 
 **Done when:** integration tests prove that anonymous calls get 401, a Staff user calling
 `unassign-all` gets 403, a POST without the XSRF header gets 400, and the sixth bad password
@@ -968,11 +1018,13 @@ that **excludes `/api/*`**, so unknown API routes still return 404 Problem Detai
 needs `.AllowAnonymous()` too, or refreshing `/login` returns 401. Add security headers: CSP,
 `X-Content-Type-Options` and `Referrer-Policy`, plus `UseHsts()` outside development.
 
-TLS ends at the reverse proxy or hosting platform, so the app must trust its forwarded headers.
-Call `app.UseForwardedHeaders()` first in the pipeline, with `X-Forwarded-For` and
-`X-Forwarded-Proto` enabled and the proxy registered as a known proxy or network. Without it the
-app treats every request as plain HTTP from the proxy's address: HSTS is never sent, and the
-login rate limiter puts all users in one bucket.
+TLS ends at the reverse proxy, so the app must trust its forwarded headers. In production the
+proxy is Caddy, on the same Docker Compose network as the app (Phase 10). Call
+`app.UseForwardedHeaders()` first in the pipeline, with `X-Forwarded-For` and
+`X-Forwarded-Proto` enabled and the Compose network's address range registered as a known
+network (read from configuration). The app's port is never published on the host, so nothing
+but Caddy can reach it. Without this the app treats every request as plain HTTP from the
+proxy's address: HSTS is never sent, and the login rate limiter puts all users in one bucket.
 
 **8.2 Container image without a Dockerfile:**
 
@@ -987,21 +1039,50 @@ and `Microsoft.Data.SqlClient` refuses to open a connection without them. As a s
 container. If either fails on chiseled, switch `ContainerFamily` to `noble`.
 
 **8.3 Database migrations for releases.** Never call `Database.Migrate()` at app startup. Build
-a migration bundle (`dotnet ef migrations bundle --self-contained -r linux-x64`) or an
-idempotent script (`dotnet ef migrations script --idempotent`) and run it as a separate
-release step.
+a migration bundle and package it as a second, small image:
 
-**8.4 `compose.prod.yaml`** for a local production-like run: SQL Server, a one-shot migrator
-container, and the app image on `:8080`, with configuration through environment variables
+```bash
+dotnet ef migrations bundle --project src/University.Api --self-contained -r linux-x64 -o artifacts/efbundle
+docker build -f deploy/migrator.Dockerfile -t university-migrator artifacts
+```
+
+```dockerfile
+# deploy/migrator.Dockerfile
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-noble
+COPY efbundle /efbundle
+USER $APP_UID
+ENTRYPOINT ["/efbundle"]
+```
+
+The migrator runs as a one-shot container before the new app version starts, and it is the only
+thing that connects with a login allowed to change the schema. It reads the same
+`ConnectionStrings__University` setting as the app. Add an
+`IDesignTimeDbContextFactory<UniversityDbContext>` that builds the context from configuration,
+so `dotnet ef` and the bundle don't have to start the whole application.
+
+Rollback only switches the app image back, never the schema. Every migration must therefore
+work with the previous app version: add columns and tables first, and remove old ones in a
+later release.
+
+**8.4 `compose.prod.yaml`** for a local rehearsal of the production layout. It mirrors
+`deploy/compose.aws.yaml` (Phase 10), with a SQL Server container standing in for RDS and no
+Caddy: SQL Server, the one-shot migrator container, and the app image on `:8080`, with
+configuration through environment variables
 (`ConnectionStrings__University`, `Seed__AdminEmail`, `Seed__AdminPassword`, `University__Name`).
 The auth cookie is `Secure` in this run. Chrome and Firefox still accept it on
 `http://localhost`; Safari may reject it.
 
-**8.5 GitHub Actions** (`.github/workflows/ci.yml`), triggered by pushes and PRs on
-`migration/**` and `master`. The jobs were added as the work reached them (1.7, 5.2, 7.4). The
-final shape:
+**8.5 GitHub Actions** (`.github/workflows/ci.yml`), triggered by pull requests and by pushes
+to `migration/**`. Pushes to `main` run the same jobs through `deploy.yml` (10.2), which calls
+this workflow before every release. The jobs were added as the work reached them (1.7, 5.2,
+7.4). The final shape:
 
 ```yaml
+on:
+  pull_request:
+  push: { branches: ["migration/**"] }
+  workflow_call:            # deploy.yml runs these same jobs before every release
+
 jobs:
   api:
     runs-on: ubuntu-latest
@@ -1032,22 +1113,406 @@ Add `dependabot.yml` (NuGet, npm and GitHub Actions on a weekly schedule; ignore
 of `Microsoft.*` packages above 10 while you're on .NET 10 LTS) and enable CodeQL
 (C# + JavaScript/TypeScript) and secret scanning in the repository settings.
 
+**8.6 Production logging and telemetry.** Outside Development, write logs to stdout as JSON
+(`AddJsonConsole`). Docker forwards them to CloudWatch Logs (10.1). The OTLP exporter stays off
+unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set, so production needs no collector.
+
 **Done when:** CI is green on the branch, and `docker compose -f compose.prod.yaml up` serves
 the full app at `http://localhost:8080`.
 
 ---
 
-## Phase 9 — Cut-over and cleanup
+## Phase 9 — AWS infrastructure (one time, by hand)
+
+Everything is created in **`us-east-1`**, in the AWS Console unless a command is shown. Name
+every resource `university-…` and tag it `Project=university`, so the teardown at the end of
+this phase can find everything. Keep the IDs you collect (account ID, instance ID, endpoints) in
+a private note. None of them goes into the repository.
+
+```
+Browser ──HTTPS──▶ Elastic IP ─▶ EC2 t3.small (Ubuntu 24.04, Docker Compose)
+                                   ├─ caddy     :80 / :443  →  app:8080
+                                   ├─ app       (image from ECR, port not published)
+                                   └─ migrator  (one-shot, on each deploy)
+                                          │ 1433, inside the VPC
+                                          ▼
+                                 RDS SQL Server Express (db.t3.micro, not public)
+
+GitHub Actions ──OIDC──▶ IAM role ──▶ ECR (push images), SSM Run Command (deploy)
+EC2 instance role ─────▶ ECR (pull), Parameter Store (read), CloudWatch Logs (write)
+```
+
+**9.1 Account safety.** Sign in as the root user only to turn on MFA for it and to create an
+administrator for daily use (IAM Identity Center, or an IAM user with MFA). Do everything else
+as that administrator. Create a monthly cost budget in AWS Budgets ($50, with an email alert at
+80%) before creating anything that bills. Install AWS CLI v2 and the Session Manager plugin
+locally and sign in with `aws configure sso`.
+
+**9.2 ECR repositories.** Two private repositories, each with a lifecycle rule that keeps the
+last 10 images:
+
+```bash
+for r in app migrator; do aws ecr create-repository --repository-name university/$r; done
+```
+
+**9.3 Security groups** (in the default VPC):
+
+| Group | Inbound | Purpose |
+|---|---|---|
+| `university-app-sg` | TCP 80 and 443 from anywhere. **No port 22** | The EC2 instance |
+| `university-db-sg` | TCP 1433 from `university-app-sg` only | The database |
+
+**9.4 IAM role for the instance.** Create role `university-ec2` (trusted entity: EC2) with the
+managed policy `AmazonSSMManagedInstanceCore` and this inline policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": "ecr:GetAuthorizationToken", "Resource": "*" },
+    { "Effect": "Allow",
+      "Action": ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"],
+      "Resource": "arn:aws:ecr:us-east-1:<account-id>:repository/university/*" },
+    { "Effect": "Allow", "Action": "ssm:GetParametersByPath",
+      "Resource": ["arn:aws:ssm:us-east-1:<account-id>:parameter/university/prod",
+                   "arn:aws:ssm:us-east-1:<account-id>:parameter/university/prod/*"] },
+    { "Effect": "Allow", "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:us-east-1:<account-id>:log-group:/university/prod:*" }
+  ]
+}
+```
+
+Also create the CloudWatch log group `/university/prod` with 14-day retention.
+
+**9.5 Database (RDS).** Create database → Standard create:
+
+| Setting | Value |
+|---|---|
+| Engine | Microsoft SQL Server, edition **Express**, the newest version offered for Express. Make `compose.yaml` match it (0.5) |
+| Identifier / master user | `university-db` / `admin`, with a generated password that you manage yourself |
+| Instance class / storage | `db.t3.micro`, 20 GB gp3, storage autoscaling off |
+| Connectivity | Default VPC, public access **No**, security group `university-db-sg` |
+| Backups | Automated, 7-day retention |
+| Protection | Encryption on (default), deletion protection on |
+
+Read the monthly estimate the console shows before you confirm, because the Express rate in
+Appendix C is unconfirmed. Creation takes around 20 minutes. Note the endpoint host name.
+
+**9.6 EC2 instance.** Launch instance:
+
+| Setting | Value |
+|---|---|
+| Name / AMI | `university-app` / Ubuntu Server 24.04 LTS, x86-64 |
+| Type / storage | `t3.small` / 20 GB gp3, encrypted |
+| Key pair | Proceed **without** a key pair. Shell access is through SSM Session Manager |
+| Network | Default VPC, auto-assign public IP, security group `university-app-sg` |
+| IAM instance profile | `university-ec2` |
+| Metadata | IMDSv2 required |
+
+User data (runs once, at first boot):
+
+```bash
+#!/bin/bash
+set -euo pipefail
+apt-get update
+apt-get install -y docker.io docker-compose-v2 curl jq
+snap install aws-cli --classic
+systemctl enable --now docker
+install -d -m 700 /opt/university
+fallocate -l 1G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+```
+
+Then allocate an **Elastic IP** and associate it with the instance. The site's host name is that
+address with dashes, followed by `.sslip.io`: for `203.0.113.10` it is `203-0-113-10.sslip.io`.
+Check that the instance is "Online" under Systems Manager → Fleet Manager, and that
+`aws ssm start-session --target <instance-id>` opens a shell where `docker compose version` works.
+
+**9.7 Configuration in Parameter Store.** Create these under `/university/prod/`. The deploy
+script turns the last part of each name into an environment variable:
+
+| Name | Type | Value |
+|---|---|---|
+| `SITE_HOST` | String | `<a-b-c-d>.sslip.io` |
+| `ConnectionStrings__Migrator` | SecureString | `Server=<rds-endpoint>,1433;Database=University;User Id=admin;Password=<master password>;Encrypt=True;TrustServerCertificate=True` |
+| `ConnectionStrings__University` | SecureString | The same, with `User Id=university_app` and that login's password |
+| `Seed__AdminEmail` | String | The first administrator's email |
+| `Seed__AdminPassword` | SecureString | Their initial password |
+| `University__Name` | String | The name shown in the header and on the PDF |
+
+Generate passwords without `$`, `;`, quotes or spaces. Those characters break connection strings
+and Compose env files. `TrustServerCertificate=True` still encrypts the connection but doesn't
+verify the RDS certificate. Inside the VPC that is an acceptable start. Verifying it with the
+RDS certificate bundle is a follow-up (Appendix D).
+
+**9.8 Database and application login.** The app must not use the master login. From a Session
+Manager shell on the instance, create the empty database and a least-privilege login. The SQL
+Server image is used here only for its `sqlcmd` client:
+
+```bash
+docker run --rm -i --entrypoint /opt/mssql-tools18/bin/sqlcmd mcr.microsoft.com/mssql/server:2022-latest \
+  -S <rds-endpoint> -U admin -P '<master password>' -C <<'SQL'
+CREATE DATABASE University;
+GO
+CREATE LOGIN university_app WITH PASSWORD = '<app password>';
+GO
+USE University;
+CREATE USER university_app FOR LOGIN university_app;
+ALTER ROLE db_datareader ADD MEMBER university_app;
+ALTER ROLE db_datawriter ADD MEMBER university_app;
+GO
+SQL
+docker image rm mcr.microsoft.com/mssql/server:2022-latest
+```
+
+This also proves that the instance can reach the database. The migrator fills the empty
+database on the first deployment.
+
+**9.9 IAM role for GitHub Actions.** Add an OpenID Connect identity provider with URL
+`https://token.actions.githubusercontent.com` and audience `sts.amazonaws.com`. Create role
+`university-github-deploy` with this trust policy, which only accepts jobs that run in this
+repository's `production` environment:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "Federated": "arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com" },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": { "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      "token.actions.githubusercontent.com:sub": "repo:<owner>/<repo>:environment:production"
+    } }
+  }]
+}
+```
+
+Its permissions: push to the two repositories, and run a shell command on this one instance.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Effect": "Allow", "Action": "ecr:GetAuthorizationToken", "Resource": "*" },
+    { "Effect": "Allow",
+      "Action": ["ecr:BatchCheckLayerAvailability", "ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer",
+                 "ecr:InitiateLayerUpload", "ecr:UploadLayerPart", "ecr:CompleteLayerUpload", "ecr:PutImage"],
+      "Resource": "arn:aws:ecr:us-east-1:<account-id>:repository/university/*" },
+    { "Effect": "Allow", "Action": "ssm:SendCommand",
+      "Resource": ["arn:aws:ssm:us-east-1::document/AWS-RunShellScript",
+                   "arn:aws:ec2:us-east-1:<account-id>:instance/<instance-id>"] },
+    { "Effect": "Allow", "Action": "ssm:GetCommandInvocation", "Resource": "*" }
+  ]
+}
+```
+
+**Done when:** the instance is online in Fleet Manager, 9.8 ran without errors, both ECR
+repositories exist, the six parameters exist, and the budget alert is active.
+
+**Teardown, when you want to stop paying.** Terminate the instance, **release the Elastic IP**
+(an unattached one still bills), delete the RDS instance (turn off deletion protection first,
+and skip the final snapshot unless you want to keep the data, because snapshots bill for
+storage), then delete the ECR repositories, the log group and the parameters. IAM roles cost
+nothing. Stopping is not the same as deleting: a stopped instance still pays for its disk and
+address, and AWS starts a stopped RDS instance again after 7 days.
+
+---
+
+## Phase 10 — Continuous deployment
+
+**10.1 Files in `deploy/`.** `compose.aws.yaml` describes what runs on the instance:
+
+```yaml
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data                 # certificates; must survive restarts
+    depends_on: [app]
+
+  app:
+    image: ${REGISTRY}/university/app:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: app.env
+    environment:
+      ForwardedHeaders__KnownNetwork: 172.28.0.0/24
+    logging: &cloudwatch
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /university/prod
+        tag: "{{.Name}}"
+    # no "ports": only Caddy can reach the app
+
+  migrator:
+    image: ${REGISTRY}/university/migrator:${IMAGE_TAG}
+    profiles: [migrate]                  # runs only on request: docker compose run --rm migrator
+    env_file: migrator.env
+    logging: *cloudwatch
+
+networks:
+  default:
+    ipam: { config: [{ subnet: 172.28.0.0/24 }] }
+
+volumes:
+  caddy-data:
+```
+
+`Caddyfile`. Caddy gets and renews the certificate by itself and passes the forwarded headers:
+
+```
+{$SITE_HOST} {
+    encode zstd gzip
+    reverse_proxy app:8080
+}
+```
+
+`deploy.sh <image-tag> <registry> <owner/repo>` runs on the instance as root, in
+`/opt/university`:
+
+1. Download `compose.aws.yaml` and `Caddyfile` from GitHub for exactly the commit being deployed.
+2. Read `/university/prod/` from Parameter Store (`aws ssm get-parameters-by-path
+   --with-decryption`) and write three files that only root can read: `.env` (`SITE_HOST`,
+   `REGISTRY`, `IMAGE_TAG`), `app.env`, and `migrator.env`, in which
+   `ConnectionStrings__Migrator` is renamed to `ConnectionStrings__University`.
+3. Log Docker in to ECR with the instance role and pull both images.
+4. Run `docker compose run --rm migrator`. If it fails, stop here: the old version keeps running.
+5. Run `docker compose up -d --remove-orphans`.
+6. Poll `https://$SITE_HOST/health/ready` for up to 90 seconds. If it never succeeds, start the
+   previous image tag again (kept in `current-tag`) and exit with an error.
+7. On success, record the new tag in `current-tag` and prune images older than a week.
+
+The script is fetched from the public repository, pinned to the commit SHA. If the repository
+ever becomes private, publish the `deploy/` folder to S3 in the workflow and fetch it from there.
+
+**10.2 `.github/workflows/deploy.yml`:**
+
+```yaml
+name: deploy
+on:
+  push:
+    branches: [main]
+    tags: ["deploy-*"]          # releases from a branch before the merge to main (10.4)
+concurrency: { group: production, cancel-in-progress: false }
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    permissions: { id-token: write, contents: read }
+    env:
+      REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm, cache-dependency-path: src/university-web/package-lock.json }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: "${{ vars.AWS_DEPLOY_ROLE_ARN }}", aws-region: us-east-1 }
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build the SPA into wwwroot
+        run: |
+          npm ci --prefix src/university-web
+          npm run build --prefix src/university-web
+          cp -r src/university-web/dist/university-web/browser/. src/University.Api/wwwroot/
+
+      - name: Build and push the app image
+        run: >
+          dotnet publish src/University.Api -c Release /t:PublishContainer
+          -p:ContainerRegistry=$REGISTRY -p:ContainerRepository=university/app
+          -p:ContainerImageTag=$GITHUB_SHA -p:ContainerFamily=noble-chiseled-extra
+
+      - name: Build and push the migrator image
+        run: |
+          dotnet tool restore
+          dotnet ef migrations bundle --project src/University.Api --self-contained -r linux-x64 -o artifacts/efbundle
+          docker build -f deploy/migrator.Dockerfile -t $REGISTRY/university/migrator:$GITHUB_SHA artifacts
+          docker push $REGISTRY/university/migrator:$GITHUB_SHA
+
+      - name: Deploy through SSM
+        run: |
+          cmd="curl -fsSL https://raw.githubusercontent.com/$GITHUB_REPOSITORY/$GITHUB_SHA/deploy/deploy.sh | bash -s -- $GITHUB_SHA $REGISTRY $GITHUB_REPOSITORY"
+          id=$(aws ssm send-command --document-name AWS-RunShellScript \
+                 --instance-ids "${{ vars.EC2_INSTANCE_ID }}" --comment "deploy $GITHUB_SHA" \
+                 --parameters "$(jq -nc --arg c "$cmd" '{commands:[$c]}')" \
+                 --query Command.CommandId --output text)
+          # Poll `aws ssm get-command-invocation` every 10 s for up to 10 minutes, print the
+          # script's output, and fail the job unless the status is "Success".
+
+      - name: Smoke test
+        run: curl -fsS --retry 5 --retry-delay 5 "https://${{ vars.SITE_HOST }}/health/ready"
+```
+
+Images are tagged with the commit SHA, so what runs in production is always traceable to a
+commit. `concurrency` makes two releases queue instead of overlapping.
+
+**10.3 GitHub settings.** Create the environment `production` and limit it to the branch `main`
+and the tags `deploy-*`. Adding yourself as a required reviewer turns every release into a
+one-click approval, which is optional. Add four repository **variables**: `AWS_ACCOUNT_ID`,
+`AWS_DEPLOY_ROLE_ARN`, `EC2_INSTANCE_ID` and `SITE_HOST`. There are no secrets to add: the
+workflow gets short-lived AWS credentials through OIDC.
+
+**10.4 First deployment, from the migration branch.** `main` doesn't contain the new app yet, so
+release with a tag:
+
+```bash
+git tag deploy-1 && git push origin deploy-1
+gh run watch
+```
+
+Then open `https://<site-host>`, sign in as the seeded administrator and change the password.
+Go through the acceptance checklist from 7.5 on the live site. Check that the logs arrive in
+CloudWatch, and the next day that RDS has taken an automated backup. Once the administrator
+exists, delete the `Seed__AdminPassword` parameter.
+
+If Caddy can't get a certificate for the `sslip.io` name (its logs say so), see Appendix D item 9.
+
+**10.5 Rollback.** Two layers. `deploy.sh` restarts the previous image by itself when the new
+one fails its health check. To go back later, open the last good run of the `deploy` workflow
+and choose **Re-run all jobs**: it rebuilds and deploys that commit. The database is never
+rolled back, which is why migrations must stay compatible with the previous version (8.3).
+
+**10.6 Moving to a real domain later.** Register the domain, create an A record that points to
+the Elastic IP, change the `SITE_HOST` parameter and the `SITE_HOST` repository variable, and
+deploy. Caddy gets the new certificate on start. Users have to sign in again, because the
+cookie belongs to the old host name.
+
+**10.7 Upkeep.** Ubuntu installs security updates unattended; reboot the instance about once a
+month. RDS applies minor engine updates in its maintenance window. Review the bill against the
+budget monthly.
+
+**Done when:** pushing a `deploy-*` tag releases the app with no manual step other than the
+optional approval, `https://<site-host>/health/ready` answers 200 with a valid certificate, and
+a deliberately broken release leaves the previous version running.
+
+---
+
+## Phase 11 — Cut-over and cleanup
 
 1. Rewrite `README.md`: what the app is, screenshots, the stack, how to run it (Compose +
-   `dotnet watch` + `ng serve`), how to run the tests, and the default roles.
-2. `git rm -r legacy/`. The 2017 code stays in the `master` history and in a tag:
-   `git tag legacy-2017 master` before merging.
-3. Open a PR `migration/aspnet-core → master` with `gh pr create` and merge it with a merge
-   commit, not a squash, so the per-feature commits stay in the history. Tag `v2.0.0`.
+   `dotnet watch` + `ng serve`), how to run the tests, the default roles, and how a release
+   reaches production.
+2. `git rm -r legacy/`. The 2017 code stays in the `main` history and in a tag:
+   `git tag legacy-2017 main` before merging.
+3. Open a PR `migration/aspnet-core → main` with `gh pr create` and merge it with a merge
+   commit, not a squash, so the per-feature commits stay in the history. Tag `v2.0.0`. The
+   merge is a push to `main`, so it deploys by itself. Check the `deploy` run and the live site.
+   From here on, every push to `main` is a release.
 4. Note the reusable pieces for the **Diagnostic Center Bill Management** migration: the
    skeleton files, `Common/` (error handling, auth, antiforgery), the Angular `core/` and
-   `shared/` folders, the test fixtures and the CI workflow.
+   `shared/` folders, the test fixtures, the CI and deploy workflows and the `deploy/` folder.
 
 ---
 
@@ -1087,18 +1552,47 @@ the full app at `http://localhost:8080`.
 | M4 | Phase 4.7–4.12: students, rooms, enrollment, results, PDF, with integration tests |
 | M5 | Phases 5–6: Angular app covering all 14 stories, CI `web` job |
 | M6 | Phases 7–8: remaining tests, acceptance checklist, E2E happy path, image, CI green |
-| M7 | Phase 9: README, legacy removed, PR merged, `v2.0.0` |
+| M7 | Phase 9: AWS infrastructure created, instance reachable through SSM, database reachable from the instance |
+| M8 | Phase 10: deploy workflow, first release from the migration branch, acceptance checklist passed on the live site |
+| M9 | Phase 11: README, legacy removed, PR merged, `v2.0.0`, automatic releases from `main` |
 
-## Appendix C — Deployment options (to decide later)
+## Appendix C — Deployment decisions and costs
 
-| Option | What it adds |
+| Area | Choice | Why |
+|---|---|---|
+| Compute | One EC2 `t3.small` with Docker Compose | The app is small, and one instance is the simplest thing that works |
+| Database | RDS for SQL Server Express, `db.t3.micro` | Managed backups and patching. It costs about the same as self-hosting, because SQL Server on the instance would need a `t3.medium` |
+| HTTPS | Caddy with a free `sslip.io` host name | No domain cost. A real domain is a small change later (10.6) |
+| Images | Amazon ECR | The instance pulls with its IAM role, so no registry password is stored anywhere |
+| Secrets | SSM Parameter Store | Free at this size, encrypted, and nothing secret lives in GitHub |
+| Deploy access | GitHub OIDC + SSM Run Command | No long-lived AWS keys and no SSH port |
+| Provisioning | By hand (Phase 9) | Quickest start. The steps can be turned into Terraform later |
+
+**Estimated monthly cost** (`us-east-1`, on-demand, running all month, from third-party price
+lists in November 2026; check the AWS pricing pages before relying on them):
+
+| Item | About |
 |---|---|
-| Linux VM + Nginx | Run the image with Docker or systemd; Nginx + Let's Encrypt for TLS; SQL Server container or a managed database; run the migration bundle over SSH or in a GitHub Actions job |
-| Azure App Service + Azure SQL | Container or code deploy; GitHub Actions with OIDC (no stored secrets); connection string in App Service settings or Key Vault; migration bundle as a release step |
-| Azure Container Apps / other container platforms | Push the image to GHCR or ACR; managed TLS; scale to zero for a portfolio project |
+| EC2 `t3.small` | $15 |
+| RDS `db.t3.micro`, SQL Server Express | $16–22 (unconfirmed) |
+| Disks, 20 GB + 20 GB | $4 |
+| Public IPv4 address | $3.65 |
+| ECR, CloudWatch Logs, Parameter Store, data transfer | under $1 |
+| **Total** | **$39–45** |
 
-The Phase 8 image, the configuration-by-environment-variables approach and the separate
-migration step work unchanged for all three.
+The AWS free tier or new-account credits may cover part of this, depending on when the account
+was created. The Billing console shows what applies.
+
+**Alternatives considered:**
+
+- SQL Server Express in a container on a `t3.medium`: about $36 a month, one machine, but
+  backups become our job.
+- Terraform or CloudFormation instead of manual setup: reproducible, at the cost of another
+  tool to learn first.
+- An SSH deploy key instead of OIDC + SSM: simpler to understand, but a long-lived secret and
+  an open port.
+- A real domain from the start: about $11 a year at Cloudflare, or about $22 a year through
+  Route 53 including its hosted zone.
 
 ## Appendix D — Open items to confirm
 
@@ -1114,3 +1608,15 @@ migration step work unchanged for all three.
 6. **Authentication and roles.** The spec has no login at all. Identity, the three roles and the
    permission matrix in §2.4 are additions made for a real deployment. Confirm the matrix, or
    reduce it (for example to Admin and Staff only).
+7. **RDS price.** The SQL Server Express rate for `db.t3.micro` could not be confirmed from AWS's
+   own pages. Read the estimate in the RDS console in step 9.5.
+8. **SQL Server version.** AWS announced SQL Server 2025 on RDS for the Enterprise, Standard and
+   Developer editions. Express was not in the announcement. Use the newest version RDS offers
+   for Express, and pin local development and tests to the same major version (0.5).
+9. **Certificates for `sslip.io`.** Let's Encrypt limits certificates per registered domain, and
+   it is not confirmed that `sslip.io` host names are exempt, so issuance can be refused when
+   many other users share the domain. Caddy tries a second certificate authority by itself. If
+   that also fails, register a domain (10.6).
+10. **Verifying the RDS certificate.** The connection strings use `TrustServerCertificate=True`
+    (9.7). To verify the server instead, add the RDS certificate bundle to the app and migrator
+    containers' trust store and set it to `False`.
