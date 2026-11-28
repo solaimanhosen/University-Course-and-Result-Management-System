@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | In progress (1.1–1.3 done) |
+| 1 — API foundation | In progress (1.1–1.4 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -549,7 +549,8 @@ an `IdentityDbContext<ApplicationUser>`. `AddPersistence` fails fast when
 retry strategy, any explicit transaction must run inside
 `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`.
 
-**1.4 `DbExceptionHandler`** (`IExceptionHandler`). Map `DbUpdateException` with SQL error
+**1.4 `DbExceptionHandler`** (`IExceptionHandler`). ✅ Done. It also catches a bare `SqlException` 2601/2627,
+which `ExecuteUpdate`/`ExecuteDelete` and raw SQL throw without the `DbUpdateException` wrapper. Map `DbUpdateException` with SQL error
 **2601/2627** (unique violation) → 409 Problem Details, `DbUpdateConcurrencyException` → 409,
 and everything else → 500 with no internal details. Endpoints still check for duplicates first
 so they can return a friendly message. The handler covers races.
