@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  pull_request:
+  push: { branches: ["migration/**"] }
+  workflow_call:            # deploy.yml runs these same jobs before every release (Phase 10)
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: global.json }
+      - run: dotnet tool restore && dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: git diff --exit-code openapi/          # the build rewrote the OpenAPI file; fail if the commit is stale
+      - run: dotnet test --no-build -c Release      # Testcontainers uses the runner's Docker
+  # web joins in Phase 5, e2e in Phase 7
