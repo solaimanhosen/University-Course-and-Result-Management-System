@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | In progress (1.1–1.2 done) |
+| 1 — API foundation | In progress (1.1–1.3 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -542,7 +542,10 @@ app.Run();
 public partial class Program;   // for WebApplicationFactory in integration tests
 ```
 
-**1.3 Persistence.** Register `UseSqlServer(cs, o => o.EnableRetryOnFailure())`. Because of the
+**1.3 Persistence.** ✅ Done. `UniversityDbContext` is an empty `DbContext` until 2.3 makes it
+an `IdentityDbContext<ApplicationUser>`. `AddPersistence` fails fast when
+`ConnectionStrings:University` is missing (except under the OpenAPI generator, see 1.5), and
+`/health/ready` returns 503 until the Phase 2 migrations create the database. Register `UseSqlServer(cs, o => o.EnableRetryOnFailure())`. Because of the
 retry strategy, any explicit transaction must run inside
 `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`.
 

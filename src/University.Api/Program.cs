@@ -1,13 +1,15 @@
 using Scalar.AspNetCore;
 using University.Api.Common;
+using University.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApiDocs();
 builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddDbContextCheck<UniversityDbContext>(tags: ["ready"]);
 
 var app = builder.Build();
 
