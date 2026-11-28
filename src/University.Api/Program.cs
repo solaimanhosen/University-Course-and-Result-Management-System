@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddApiDocs();
+builder.Services.AddObservability(builder.Configuration);
 builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DbExceptionHandler>();

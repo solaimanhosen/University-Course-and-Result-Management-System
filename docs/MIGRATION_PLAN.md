@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | In progress (1.1–1.5 done) |
+| 1 — API foundation | In progress (1.1–1.6 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -571,7 +571,8 @@ file is out of date (see 8.5).
 Gotcha: the generator runs the app's entry point. Skip the connection-string check and both
 seeders when `Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"`.
 
-**1.6 Observability.** `AddOpenTelemetry().WithTracing(...)/.WithMetrics(...)` with the
+**1.6 Observability.** ✅ Done. `UseOtlpExporter()` exports logs as well as traces and metrics, so the
+Aspire Dashboard (http://localhost:18888) shows all three. `AddOpenTelemetry().WithTracing(...)/.WithMetrics(...)` with the
 ASP.NET Core, HttpClient and SqlClient instrumentation, plus `.UseOtlpExporter()`. Point
 `OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4317` in `launchSettings.json`. Register the
 exporter only when that variable is set, so production runs without a collector (see 8.6).

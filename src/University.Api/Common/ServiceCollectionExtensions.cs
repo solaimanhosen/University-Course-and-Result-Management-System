@@ -1,5 +1,9 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using University.Api.Data;
 
 namespace University.Api.Common;
@@ -27,6 +31,29 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddApiDocs(this IServiceCollection services)
     {
         services.AddOpenApi();
+        return services;
+    }
+
+    public static IServiceCollection AddObservability(this IServiceCollection services, IConfiguration configuration)
+    {
+        var otel = services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService("University.Api"))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSqlClientInstrumentation())
+            .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSqlClientInstrumentation());
+
+        // Export only when a collector is configured (the Aspire Dashboard locally). Production
+        // runs without one and sends its logs to stdout instead.
+        if (!string.IsNullOrWhiteSpace(configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+        {
+            otel.UseOtlpExporter();
+        }
+
         return services;
     }
 
