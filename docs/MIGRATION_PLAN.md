@@ -18,7 +18,7 @@ table is updated in the same commit.
 
 | Phase | Status |
 |---|---|
-| 0 — Prepare the repository | **In progress.** 0.1–0.3 done; 0.4 and 0.5 remaining |
+| 0 — Prepare the repository | ✅ **Done** |
 | 1 — API foundation | Not started |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
@@ -348,7 +348,7 @@ git rm Tasks.txt
 git ls-files legacy | grep -E '/(bin|obj|packages)/|\.suo$|\.user$|\.mdf$|\.ldf$' | xargs -r git rm --cached
 ```
 
-**0.4 Create the solution skeleton.**
+**0.4 Create the solution skeleton.** ✅ Done
 
 ```bash
 dotnet new globaljson --sdk-version 10.0.100 --roll-forward latestFeature
@@ -356,10 +356,13 @@ dotnet new globaljson --sdk-version 10.0.100 --roll-forward latestFeature
 dotnet new editorconfig
 dotnet new sln -n University                 # → University.slnx
 dotnet new tool-manifest && dotnet tool install dotnet-ef --version "10.*"
+dotnet new buildprops                        # → Directory.Build.props (stub, filled in below)
+dotnet new packagesprops                     # → Directory.Packages.props (stub with CPM enabled)
 ```
 
 Add `[**/Migrations/*.cs]` → `generated_code = true` to `.editorconfig` so generated migrations
-don't trip the analyzers. Add `* text=auto eol=lf` to `.gitattributes`.
+don't trip the analyzers. Add `* text=auto eol=lf` to `.gitattributes` (the space after `*`
+matters; check with `git check-attr -a README.md`).
 
 `Directory.Build.props`:
 
@@ -420,9 +423,11 @@ for any transitive package would fail every build until a fix ships.
 > Use Shouldly or plain `Assert` rather than FluentAssertions 8, which requires a paid license
 > for commercial use.
 
-**0.5 Docker Compose.** Create `.env` (git-ignored) with `MSSQL_SA_PASSWORD=<strong password>`,
-and commit an `.env.example` with a placeholder value. `compose.yaml` runs SQL Server and the
-Aspire Dashboard for telemetry:
+**0.5 Docker Compose.** ✅ Done. Commit an `.env.example` that explains the password rules
+(complexity, characters to avoid, `down -v` to change it), and copy it to `.env` (git-ignored,
+`chmod 600`) with a real password. `compose.yaml` runs SQL Server and the Aspire Dashboard for
+telemetry. Both publish their ports on `127.0.0.1` only, so the `sa` login and the anonymous
+dashboard aren't reachable from other machines on the network:
 
 ```yaml
 services:
@@ -434,7 +439,7 @@ services:
       MSSQL_PID: "Developer"
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
     ports:
-      - "1433:1433"
+      - "127.0.0.1:1433:1433"
     volumes:
       - university-sql-data:/var/opt/mssql
     healthcheck:
@@ -447,7 +452,7 @@ services:
 
   aspire-dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
-    ports: ["18888:18888", "4317:18889"]   # UI on :18888, OTLP gRPC on :4317
+    ports: ["127.0.0.1:18888:18888", "127.0.0.1:4317:18889"]   # UI on :18888, OTLP gRPC on :4317
     environment:
       DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"   # local only
 
