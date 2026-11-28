@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | In progress (1.1–1.4 done) |
+| 1 — API foundation | In progress (1.1–1.5 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -555,7 +555,8 @@ which `ExecuteUpdate`/`ExecuteDelete` and raw SQL throw without the `DbUpdateExc
 and everything else → 500 with no internal details. Endpoints still check for duplicates first
 so they can return a friendly message. The handler covers races.
 
-**1.5 Build-time OpenAPI file** (consumed by Angular in Phase 5). In the `.csproj`:
+**1.5 Build-time OpenAPI file** (consumed by Angular in Phase 5). ✅ Done (the generator check
+was already added in 1.3, because the build runs the generator from 1.1 on). In the `.csproj`:
 
 ```xml
 <PropertyGroup>
