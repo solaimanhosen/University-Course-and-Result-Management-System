@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | 1.1–1.7 done; waiting for the first green CI run on GitHub |
+| 1 — API foundation | ✅ **Done** |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -577,8 +577,8 @@ ASP.NET Core, HttpClient and SqlClient instrumentation, plus `.UseOtlpExporter()
 `OTEL_EXPORTER_OTLP_ENDPOINT` at `http://localhost:4317` in `launchSettings.json`. Register the
 exporter only when that variable is set, so production runs without a collector (see 8.6).
 
-**1.7 CI from the first commit.** ✅ Written, and its steps pass locally (`dotnet test` exits 0 while there
-are no test projects). Phase 1 is done once the first run on GitHub is green. Add `.github/workflows/ci.yml` with the `api` job from 8.5
+**1.7 CI from the first commit.** ✅ Done. The first run on GitHub was green (`dotnet test` exits 0 while
+there are no test projects). Add `.github/workflows/ci.yml` with the `api` job from 8.5
 (restore, build, test) now, so every later commit on the branch is checked. The `web` job joins
 in Phase 5 and the `e2e` job in Phase 7.
 
