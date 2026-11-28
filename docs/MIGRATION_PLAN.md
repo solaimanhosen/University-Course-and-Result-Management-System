@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | In progress (1.1 done) |
+| 1 — API foundation | In progress (1.1–1.2 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -491,7 +491,12 @@ dotnet user-secrets set "Seed:AdminPassword" '<strong password>'
 Delete the weather sample and `University.Api.http`. Set the `http` profile in
 `launchSettings.json` to `http://localhost:5080`.
 
-**1.2 `Program.cs` composition** (keep it short; each `Add*` lives in `Common/`):
+**1.2 `Program.cs` composition** (keep it short; each `Add*` lives in `Common/`): ✅ Done for
+what exists so far (API docs, validation, Problem Details, `TimeProvider`, health checks,
+Scalar). The other lines arrive with the code they call: persistence and the `ready` DbContext
+check in 1.3, `DbExceptionHandler` in 1.4, observability in 1.6, auth, rate limiter and
+antiforgery in Phase 3, seeders in Phases 2–3, the `/api` group and endpoints in Phases 3–4.
+The target shape:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
