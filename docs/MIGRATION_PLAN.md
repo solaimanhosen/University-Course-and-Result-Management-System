@@ -19,7 +19,7 @@ table is updated in the same commit.
 | Phase | Status |
 |---|---|
 | 0 — Prepare the repository | ✅ **Done** |
-| 1 — API foundation | Not started |
+| 1 — API foundation | In progress (1.1 done) |
 | 2 — Data model and migrations | Not started |
 | 3 — Authentication and authorization | Not started |
 | 4 — Feature endpoints | Not started |
@@ -473,7 +473,8 @@ Commit: `chore: add .NET 10 solution skeleton and Compose file`.
 
 ## Phase 1 — API foundation
 
-**1.1 Create the project.**
+**1.1 Create the project.** ✅ Done. Gotcha: the `webapi` template writes `Version="…"` on its
+`PackageReference`, which CPM rejects (NU1008); delete the attribute before restoring.
 
 ```bash
 dotnet new webapi -o src/University.Api
